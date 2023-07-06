@@ -2,6 +2,10 @@ from api import db
 from ..models.account_model import Account
 from marshmallow import ValidationError
 
+INPUT = 1
+OUTPUT = 2
+RESERVE = 3
+
 
 class AccountService:
     def create_account(user_id):
@@ -42,24 +46,37 @@ class AccountService:
         account = self.get_account(account_id)
         return account.balance
 
-    def update_balance(self, account_id, transaction, operation_type, previous_value=None, type_transaction=None):
+    def update_balance(self, account_id, transaction, operation_type, previous_value=None):
         account = self.get_account(account_id)
         balance = account.balance
+        reserve = account.reserve
+        print(transaction.value)
 
         if operation_type == "create":
-            if transaction.kind == "1":
+            if transaction.kind == INPUT:
                 account.balance = balance + transaction.value
-            elif transaction.kind == "2":
+            elif transaction.kind == OUTPUT:
                 account.balance = balance - transaction.value
+            elif transaction.kind == RESERVE:
+                account.reserve = reserve + transaction.value
         elif operation_type == "edit":
-            if transaction.kind == "1":
+            if transaction.kind == INPUT:
                 account.balance = balance - previous_value + transaction.value
-            elif transaction.kind == "2":
+            elif transaction.kind == OUTPUT:
                 account.balance = balance + previous_value - transaction.value
-        elif operation_type == "delete":
-            if transaction.kind == "1":
-                account.balance = balance - transaction.value
-            elif transaction.kind == "2":
-                account.balance = balance + transaction.value
+            elif transaction.kind == OUTPUT:
+                raise ValidationError("You can't edit a reserve transaction")
 
         db.session.commit()
+
+    def delete_balance_reserve(self, account_id, transaction):
+        account = self.get_account(account_id)
+        balance = account.balance
+        reserve = account.reserve
+        if transaction.kind == INPUT:
+            print("entre")
+            account.balance = balance - transaction.value
+        elif transaction.kind == OUTPUT:
+            account.balance = balance + transaction.value
+        elif transaction.kind == RESERVE:
+            account.reserve = reserve - transaction.value

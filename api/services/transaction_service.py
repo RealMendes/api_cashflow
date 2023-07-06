@@ -56,6 +56,6 @@ class TransactionService:
     def delete_transaction(self, transaction_id):
         transaction = self.get_by_transaction(transaction_id)
         account_id = transaction.account_id
-        _ACCOUNT.update_balance(account_id, transaction, DELETE)
+        _ACCOUNT.delete_balance_reserve(account_id, transaction)
         db.session.delete(transaction)
         db.session.commit()
