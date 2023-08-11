@@ -1,20 +1,32 @@
 from flask import request
-from flask_restful import Resource
+from flask_restx import Resource, fields
 from marshmallow import ValidationError
 from http import HTTPStatus
 from api import api
 from . import helper
-
 from ..schemas.account_schema import AccountSchema
 from ..services.account_service import AccountService
 
 account_service = AccountService()
 
+account_namespace = api.namespace('accounts', description='Account operations')
+
+account_output_model = api.model('AccountOutput', {
+    'account_number': fields.String(description='Account number'),
+    'balance': fields.Float(description='Account balance'),
+    # Add other fields as needed
+})
+
+@account_namespace.route('/<int:account_id>')
 class AccountDetail(Resource):
-    @staticmethod
+
+    @api.response(HTTPStatus.OK, 'Account details retrieved successfully.', account_output_model)
+    @api.response(HTTPStatus.BAD_REQUEST, 'Validation error')
     @helper.token_required
-    def get(current_user, **kwargs):
-        account_id = kwargs['account_id']
+    def get(self, current_user, account_id):
+        """
+        Retrieve account details by ID.
+        """
         try:
             account = account_service.get_account(account_id)
             return AccountSchema().dump(account), HTTPStatus.OK
@@ -23,10 +35,13 @@ class AccountDetail(Resource):
         except Exception as err:
             return {'message': "Something is wrong", 'errors': err}, HTTPStatus.BAD_REQUEST
 
-    @staticmethod
+    @api.response(HTTPStatus.OK, 'Successfully deleted account.')
+    @api.response(HTTPStatus.BAD_REQUEST, 'Validation error')
     @helper.token_required
-    def delete(current_user, **kwargs):
-        account_id = kwargs['account_id']
+    def delete(self, current_user, account_id):
+        """
+        Delete account by ID.
+        """
         try:
             account_service.delete_account(account_id)
             return {"message": "Successfully deleted account."}, HTTPStatus.OK
@@ -34,6 +49,5 @@ class AccountDetail(Resource):
             return {"message": "Validation error", "errors": err.messages}, HTTPStatus.BAD_REQUEST
         except Exception as err:
             return {'message': "Something is wrong", 'errors': err}, HTTPStatus.BAD_REQUEST
-
 
 api.add_resource(AccountDetail, "/accounts/<int:account_id>")
