@@ -12,7 +12,7 @@ db = SQLAlchemy(app)
 ma = Marshmallow(app)
 mi = Migrate(app, db)
 
-api = Api(app, version='1.0', title='CashFlow', description='API de controle financeiro')
+api = Api(app, version='1.0', title='CashFlow', description='Financial control API')
 
 
 from .models import account_model
