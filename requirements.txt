@@ -4,7 +4,6 @@ flask-pymongo
 flask_sqlalchemy
 jsonschema==4.19.0
 jsonschema-specifications==2023.7.1
-jwt==1.2.0
 markupsafe==2.1.2
 marshmallow==3.19.0
 marshmallow-sqlalchemy==0.29.0
@@ -13,3 +12,4 @@ mysqlclient==2.1.0
 python-dotenv==0.19.1
 werkzeug===2.1.2
 flask-restx>=0.5.1
+PyJWT==2.8.0
