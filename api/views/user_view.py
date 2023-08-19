@@ -13,6 +13,7 @@ user_namespace = api.namespace('users', description='User operations')
 
 user_input_model = api.model('UserInput', {
     'username': fields.String(required=True, description='Username'),
+    'email': fields.String(required=True, description='Email'),
     'password': fields.String(required=True, description='Password'),
 
 })
