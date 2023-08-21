@@ -1,4 +1,3 @@
-from flask import request
 from flask_restx import Resource, fields
 from marshmallow import ValidationError
 from http import HTTPStatus
@@ -14,8 +13,8 @@ account_namespace = api.namespace('accounts', description='Account operations')
 account_output_model = api.model('AccountOutput', {
     'account_number': fields.String(description='Account number'),
     'balance': fields.Float(description='Account balance'),
-    # Add other fields as needed
 })
+
 
 @account_namespace.route('/<int:account_id>')
 class AccountDetail(Resource):
@@ -35,19 +34,5 @@ class AccountDetail(Resource):
         except Exception as err:
             return {'message': "Something is wrong", 'errors': err}, HTTPStatus.BAD_REQUEST
 
-    @api.response(HTTPStatus.OK, 'Successfully deleted account.')
-    @api.response(HTTPStatus.BAD_REQUEST, 'Validation error')
-    @helper.token_required
-    def delete(self, current_user, account_id):
-        """
-        Delete account by ID.
-        """
-        try:
-            account_service.delete_account(account_id)
-            return {"message": "Successfully deleted account."}, HTTPStatus.OK
-        except ValidationError as err:
-            return {"message": "Validation error", "errors": err.messages}, HTTPStatus.BAD_REQUEST
-        except Exception as err:
-            return {'message': "Something is wrong", 'errors': err}, HTTPStatus.BAD_REQUEST
 
 api.add_resource(AccountDetail, "/accounts/<int:account_id>")
