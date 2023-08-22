@@ -47,3 +47,19 @@ class UserService:
         if user is None:
             raise ValidationError("User not found")
         return user
+
+    def update_user_by_id(self, user_id, user_data):
+        user = self.get_user_by_id(user_id)
+
+        user_dict = user_data.to_dict()
+        for key, value in user_dict.items():
+            if value is not None and key != "password":
+                setattr(user, key, value)
+
+        new_password = user_data.password
+        if new_password:
+            user.password = new_password
+            user.hash_password()
+
+        db.session.commit()
+        return user

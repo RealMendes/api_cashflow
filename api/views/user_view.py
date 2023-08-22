@@ -70,6 +70,20 @@ class UserList(Resource):
         except ValidationError as err:
             return {"message": "Validation error", "errors": err.messages}, HTTPStatus.BAD_REQUEST
 
+    @api.expect(user_input_model)
+    @api.response(HTTPStatus.OK, 'User updated successfully.')
+    @api.response(HTTPStatus.BAD_REQUEST, 'Validation error')
+    def put(self, user_id):
+        """
+        Update user by ID.
+        """
+        try:
+            user_data = UserSchema().load(request.json)
+            user = user_service.update_user_by_id(user_id, user_data)
+            return {"message": "User updated successfully."}, HTTPStatus.OK
+        except ValidationError as err:
+            return {"message": "Validation error", "errors": err.messages}, HTTPStatus.BAD_REQUEST
+
 
 @user_namespace.route('/authenticate')
 class UserAuthentication(Resource):
