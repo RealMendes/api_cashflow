@@ -1,1 +1,1 @@
-web: python manage.py db upgrade && python api/__init__.py
+web: python __init__.py
