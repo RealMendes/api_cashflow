@@ -1,3 +1,4 @@
+flask
 flask-marshmallow
 flask-migrate==2.7.0
 flask-script==2.0.6
@@ -13,3 +14,4 @@ python-dotenv
 werkzeug
 flask-restx
 PyJWT
+gunicorn
