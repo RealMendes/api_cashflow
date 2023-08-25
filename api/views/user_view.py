@@ -1,132 +1,100 @@
 from flask import request
 from flask_restx import Resource, fields
+from marshmallow import ValidationError
 from http import HTTPStatus
 from api import api
-from ..schemas.transaction_schema import TransactionSchema
-from ..services.transaction_service import TransactionService
-from ..services.account_service import AccountService
-from marshmallow import ValidationError
-from .helper import auth , token_required
+from ..schemas.user_schema import UserSchema
+from ..services.user_service import UserService
+from .helper import auth
 
-transaction_service = TransactionService()
-account_service = AccountService()
+user_service = UserService()
 
-transaction_namespace = api.namespace('transactions', description='Transaction operations')
+user_namespace = api.namespace('users', description='User operations')
 
-transaction_input_model = api.model('TransactionInput', {
-    'amount': fields.Float(required=True, description='Transaction amount'),
-    'description': fields.String(description='Transaction description'),
-    # Add other fields as needed
+user_input_model = api.model('UserInput', {
+    'username': fields.String(required=True, description='Username'),
+    'email': fields.String(required=True, description='Email'),
+    'password': fields.String(required=True, description='Password'),
+
 })
 
-transaction_output_model = api.model('TransactionOutput', {
-    'amount': fields.Float(description='Transaction amount'),
-    'description': fields.String(description='Transaction description'),
-    # Add other fields as needed
+user_output_model = api.model('UserOutput', {
+    'username': fields.String(description='Username'),
+    'password': fields.String(description='Password'),
+
 })
 
 
-@transaction_namespace.route('/<int:account_id>')
-class TransactionList(Resource):
+@user_namespace.route('/create-account')
+class UserCreateAcoount(Resource):
 
-    @api.expect(transaction_input_model)
-    @api.response(HTTPStatus.CREATED, 'Transaction registered successfully.')
+    @api.expect(user_input_model)
+    @api.response(HTTPStatus.CREATED, 'User registered successfully.')
     @api.response(HTTPStatus.BAD_REQUEST, 'Validation error')
-    @token_required
-    def post(self, current_user, account_id):
+    def post(self):
         """
-        Register a new transaction for an account.
+        Register a new user.
         """
         try:
-            transaction_data = TransactionSchema().load(request.json)
-            account_service.get_account(account_id)
-            transaction_data.account_id = account_id
-            transaction_service.create_transaction(transaction_data)
-            return {"message": "Transaction registered successfully."}, HTTPStatus.CREATED
+            user_data = UserSchema().load(request.json)
+            user_service.create_user(user_data)
+            return {"message": "User registered successfully."}, HTTPStatus.CREATED
         except ValidationError as err:
             return {"message": "Validation error", "errors": err.messages}, HTTPStatus.BAD_REQUEST
-        except Exception as err:
-            return {"message": "Something went wrong", "errors": str(err)}, HTTPStatus.BAD_REQUEST
 
 
-@transaction_namespace.route('/<int:transaction_id>')
-class TransactionDetail(Resource):
+@user_namespace.route('/list/<int:user_id>')
+class UserList(Resource):
 
-    @api.response(HTTPStatus.OK, 'Transaction details retrieved successfully.', transaction_output_model)
+    @api.response(HTTPStatus.OK, 'User details retrieved successfully.', user_output_model)
     @api.response(HTTPStatus.BAD_REQUEST, 'Validation error')
-    @token_required
-    def get(self, current_user, transaction_id):
+    def get(self, user_id):
         """
-        Retrieve transaction details by ID.
+        Retrieve user details by ID.
         """
         try:
-            transaction = transaction_service.get_by_transaction(transaction_id)
-            return TransactionSchema().dump(transaction), HTTPStatus.OK
+            user = user_service.get_user_by_id(user_id)
+            return UserSchema().dump(user), HTTPStatus.OK
         except ValidationError as err:
             return {"message": "Validation error", "errors": err.messages}, HTTPStatus.BAD_REQUEST
-        except Exception as err:
-            return {"message": "Something went wrong", "errors": str(err)}, HTTPStatus.BAD_REQUEST
 
-    @api.expect(transaction_input_model)
-    @api.response(HTTPStatus.CREATED, 'Transaction changed successfully.')
+    @api.response(HTTPStatus.OK, 'User deleted successfully.')
     @api.response(HTTPStatus.BAD_REQUEST, 'Validation error')
-    @token_required
-    def put(self, current_user, transaction_id):
+    def delete(self, user_id):
         """
-        Change transaction details by ID.
+        Delete user by ID.
         """
         try:
-            transaction_data = TransactionSchema().load(request.json)
-            account_id = transaction_data.account_id
-            account_service.get_account(account_id)
-            transaction_service.update_transaction(transaction_id, transaction_data)
-            return {"message": "Transaction changed successfully."}, HTTPStatus.CREATED
+            user = user_service.delete_user_by_id(user_id)
+            return {"message": "User deleted successfully."}, HTTPStatus.OK
         except ValidationError as err:
             return {"message": "Validation error", "errors": err.messages}, HTTPStatus.BAD_REQUEST
-        except Exception as err:
-            return {"message": "Something went wrong", "errors": str(err)}, HTTPStatus.BAD_REQUEST
 
-    @api.response(HTTPStatus.OK, 'Successfully deleted transaction.')
+    @api.expect(user_input_model)
+    @api.response(HTTPStatus.OK, 'User updated successfully.')
     @api.response(HTTPStatus.BAD_REQUEST, 'Validation error')
-    @token_required
-    def delete(self, current_user, transaction_id):
+    def put(self, user_id):
         """
-        Delete transaction by ID.
+        Update user by ID.
         """
         try:
-            transaction_service.delete_transaction(transaction_id)
-            return {"message": "Successfully deleted transaction."}, HTTPStatus.OK
+            user_data = UserSchema().load(request.json)
+            user = user_service.update_user_by_id(user_id, user_data)
+            return {"message": "User updated successfully."}, HTTPStatus.OK
         except ValidationError as err:
             return {"message": "Validation error", "errors": err.messages}, HTTPStatus.BAD_REQUEST
-        except Exception as err:
-            return {"message": "Something went wrong", "errors": str(err)}, HTTPStatus.BAD_REQUEST
 
 
-@transaction_namespace.route('/<int:account_id>/for-account')
-class TransactionListAll(Resource):
+@user_namespace.route('/authenticate')
+class UserAuthentication(Resource):
 
-    @api.response(HTTPStatus.OK, 'All transactions retrieved successfully.', transaction_output_model)
+    @api.response(HTTPStatus.OK, 'Authentication successful.')
     @api.response(HTTPStatus.BAD_REQUEST, 'Validation error')
-    @token_required
-    def get(self, current_user, account_id):
+    def post(self):
         """
-        Retrieve all transactions for an account.
+        Authenticate user.
         """
         try:
-            account = account_service.get_account(account_id)
-            if account is not None:
-                transactions_ids = transaction_service.get_all_transactions_ids(account_id)
-                transactions = []
-                for transaction_id in transactions_ids:
-                    transactions.append(transaction_service.get_by_transaction(transaction_id))
-                serialized_transactions = TransactionSchema().dump(transactions, many=True)
-                return serialized_transactions, HTTPStatus.OK
+            return auth()
         except ValidationError as err:
             return {"message": "Validation error", "errors": err.messages}, HTTPStatus.BAD_REQUEST
-        except Exception as err:
-            return {"message": "Something went wrong", "errors": str(err)}, HTTPStatus.BAD_REQUEST
-
-
-api.add_resource(TransactionList, "/transactions/<int:account_id>")
-api.add_resource(TransactionDetail, "/transactions/<int:transaction_id>")
-api.add_resource(TransactionListAll, "/transactions/<int:account_id>/for-account")
