@@ -5,10 +5,8 @@ from http import HTTPStatus
 import jwt
 from marshmallow import ValidationError
 from werkzeug.security import check_password_hash
-from flask import request, jsonify
-from api import app
+from flask import request, jsonify, current_app
 from ..services.user_service import UserService
-
 
 def auth():
     auth = request.authorization
@@ -23,11 +21,10 @@ def auth():
     if user and check_password_hash(user.password, auth.password):
         token = jwt.encode(
             {'username': user.username, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=12)},
-            app.config['SECRET_KEY'], algorithm="HS256")
+            current_app.config['SECRET_KEY'], algorithm="HS256")
         return jsonify({'token': token})
     else:
         raise ValidationError("Could not verify, wrong password")
-
 
 def token_required(f):
     @wraps(f)

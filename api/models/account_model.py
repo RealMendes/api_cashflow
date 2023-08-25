@@ -1,4 +1,4 @@
-from api import db
+from .. import db
 from .user_model import User
 
 class Account(db.Model):
