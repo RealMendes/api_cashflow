@@ -6,7 +6,7 @@ from ..schemas.transaction_schema import TransactionSchema
 from ..services.transaction_service import TransactionService
 from ..services.account_service import AccountService
 from marshmallow import ValidationError
-from .helper import auth , token_required
+from .helper import auth, token_required
 
 transaction_service = TransactionService()
 account_service = AccountService()
@@ -33,7 +33,7 @@ class TransactionList(Resource):
     @api.response(HTTPStatus.CREATED, 'Transaction registered successfully.')
     @api.response(HTTPStatus.BAD_REQUEST, 'Validation error')
     @token_required
-    def post(self, current_user, account_id):
+    def post(self, account_id):
         """
         Register a new transaction for an account.
         """
@@ -55,7 +55,7 @@ class TransactionDetail(Resource):
     @api.response(HTTPStatus.OK, 'Transaction details retrieved successfully.', transaction_output_model)
     @api.response(HTTPStatus.BAD_REQUEST, 'Validation error')
     @token_required
-    def get(self, current_user, transaction_id):
+    def get(self, transaction_id):
         """
         Retrieve transaction details by ID.
         """
@@ -71,7 +71,7 @@ class TransactionDetail(Resource):
     @api.response(HTTPStatus.CREATED, 'Transaction changed successfully.')
     @api.response(HTTPStatus.BAD_REQUEST, 'Validation error')
     @token_required
-    def put(self, current_user, transaction_id):
+    def put(self, transaction_id):
         """
         Change transaction details by ID.
         """
@@ -89,7 +89,7 @@ class TransactionDetail(Resource):
     @api.response(HTTPStatus.OK, 'Successfully deleted transaction.')
     @api.response(HTTPStatus.BAD_REQUEST, 'Validation error')
     @token_required
-    def delete(self, current_user, transaction_id):
+    def delete(self, transaction_id):
         """
         Delete transaction by ID.
         """
@@ -108,7 +108,7 @@ class TransactionListAll(Resource):
     @api.response(HTTPStatus.OK, 'All transactions retrieved successfully.', transaction_output_model)
     @api.response(HTTPStatus.BAD_REQUEST, 'Validation error')
     @token_required
-    def get(self, current_user, account_id):
+    def get(self, account_id):
         """
         Retrieve all transactions for an account.
         """
@@ -125,8 +125,3 @@ class TransactionListAll(Resource):
             return {"message": "Validation error", "errors": err.messages}, HTTPStatus.BAD_REQUEST
         except Exception as err:
             return {"message": "Something went wrong", "errors": str(err)}, HTTPStatus.BAD_REQUEST
-
-
-api.add_resource(TransactionList, "/transactions/<int:account_id>")
-api.add_resource(TransactionDetail, "/transactions/<int:transaction_id>")
-api.add_resource(TransactionListAll, "/transactions/<int:account_id>/for-account")

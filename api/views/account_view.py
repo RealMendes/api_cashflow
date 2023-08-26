@@ -22,7 +22,7 @@ class AccountDetail(Resource):
     @api.response(HTTPStatus.OK, 'Account details retrieved successfully.', account_output_model)
     @api.response(HTTPStatus.BAD_REQUEST, 'Validation error')
     @helper.token_required
-    def get(self, current_user, account_id):
+    def get(self, account_id):
         """
         Retrieve account details by ID.
         """
@@ -35,4 +35,4 @@ class AccountDetail(Resource):
             return {'message': "Something is wrong", 'errors': err}, HTTPStatus.BAD_REQUEST
 
 
-api.add_resource(AccountDetail, "/accounts/<int:account_id>")
+
